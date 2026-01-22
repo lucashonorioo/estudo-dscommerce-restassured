@@ -10,6 +10,7 @@ import static org.hamcrest.Matchers.*;
 public class ProductControllerRA {
 
     private long existingProductId, nonExistingProductId;
+    private String nameProduct;
 
     @BeforeEach
     public void setUp(){
@@ -17,6 +18,7 @@ public class ProductControllerRA {
 
         existingProductId = 2L;
         nonExistingProductId = 100L;
+        nameProduct = "PC Gamer";
 
     }
 
@@ -36,6 +38,35 @@ public class ProductControllerRA {
 
     }
 
+    @Test
+    public void findAllShouldReturnPageProductsWhenProductNameIsEmpty() {
+
+        given().get("/products?page=0")
+                .then()
+                .statusCode(200)
+                .body("content.name", hasItems("Macbook Pro", "PC Gamer Tera"));
+
+    }
+
+    @Test
+    public void findAllShouldReturnProductNameWhenProductNameExisting(){
+
+        given().get("/products?name={nameProduct}", nameProduct)
+                .then()
+                .statusCode(200)
+                .body("content.id[0]", is(4))
+                .body("content.name[0]", equalTo("PC Gamer"));
+    }
+
+    @Test
+    public void findAllShouldReturnPriceBiggerThanTwoThousand() {
+
+        given().get("/products?page=0&size=50")
+                .then()
+                .statusCode(200)
+                .body("content.findAll { it.price > 2000 }.name", hasItems("Smart TV", "PC Gamer Hera"));
+
+    }
 
 
 }
