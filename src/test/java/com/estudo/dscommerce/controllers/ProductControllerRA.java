@@ -19,7 +19,7 @@ public class ProductControllerRA {
 
     private String clientUsername, clientPassword, adminUsername, adminPassword;
     private String clientToken, adminToken, invalidToken;
-    private long existingProductId, nonExistingProductId;
+    private long existingProductId, nonExistingProductId, dependentId;
     private String nameProduct;
 
     private Map<String, Object> postProductInstance;
@@ -41,6 +41,7 @@ public class ProductControllerRA {
 
         existingProductId = 2L;
         nonExistingProductId = 100L;
+        dependentId = 3L;
         nameProduct = "PC Gamer";
 
         postProductInstance = new HashMap<>();
@@ -234,5 +235,66 @@ public class ProductControllerRA {
                 .statusCode(401);
 
     }
+
+    @Test
+    public void deleteShouldReturnNoContentWhenIdExistsAndAdminLogged(){
+
+        existingProductId = 25L;
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .when()
+                .delete("/products/{id}", existingProductId)
+                .then()
+                .statusCode(204);
+    }
+
+
+    @Test
+    public void deleteShouldReturnNotFoundWhenInvalidIdAndAdminLogged(){
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .when()
+                .delete("/producst/{id}", nonExistingProductId)
+                .then()
+                .statusCode(404)
+                .body("error", equalTo("Not Found"));
+    }
+
+    @Test
+    public void deleteShouldReturnBadRequestWhenDependenceIdAndAdminLogged(){
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .when()
+                .delete("/products/{id}", dependentId)
+                .then()
+                .statusCode(400);
+
+    }
+
+    @Test
+    public void deleteShouldReturnForbiddenWhenClientLogged(){
+
+        given()
+                .header("Authorization", "Bearer " + clientToken)
+                .when()
+                .delete("/products/{id}" , existingProductId)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    public void deleteShouldReturnUnauthorizedWhenUserIsNotLogged(){
+
+        given()
+                .header("Authorization", "Bearer " + invalidToken)
+                .when()
+                .delete("/products/{id}" , existingProductId)
+                .then()
+                .statusCode( 401);
+    }
+
 
 }
