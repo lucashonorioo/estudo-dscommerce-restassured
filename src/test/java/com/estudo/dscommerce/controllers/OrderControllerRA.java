@@ -39,12 +39,16 @@ public class OrderControllerRA {
 
         given()
                 .header("Authorization", "Bearer " + adminToken)
-                .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .when()
                 .get("orders/{id}", existingOrderId)
                 .then()
-                .statusCode(200);
+                .statusCode(200)
+                .body("id", is(1))
+                .body("moment", equalTo("2022-07-25T13:00:00Z"))
+                .body("status", equalTo("PAID"))
+                .body("client.name", equalTo("Maria Brown"))
+                .body("payment.moment", equalTo("2022-07-25T15:00:00Z"));
     }
 
     @Test
@@ -54,12 +58,65 @@ public class OrderControllerRA {
 
         given()
                 .header("Authorization", "Bearer " + clientToken)
-                .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .when()
                 .get("orders/{id}", existingOrderId)
                 .then()
                 .statusCode(200);
     }
+
+
+    @Test
+    public void findByIdShouldReturnForbiddenWhenOrderNotOfClient(){
+
+        existingOrderId = 2L;
+
+        given()
+                .header("Authorization", "Bearer " + clientToken)
+                .accept(ContentType.JSON)
+                .when()
+                .get("orders/{id}", existingOrderId)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    public void findByIdShouldReturnNotFoundWhenAdminLoggedAndOrderNotExisting(){
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .accept(ContentType.JSON)
+                .when()
+                .get("/orders/{id}", nonExistingOrderId)
+                .then()
+                .statusCode(404);
+
+    }
+
+    @Test
+    public void findByIdShouldReturnNotFoundWhenClientLoggedAndOrderNotExisting(){
+
+        given()
+                .header("Authorization", "Bearer " + clientToken)
+                .accept(ContentType.JSON)
+                .when()
+                .get("/orders/{id}", nonExistingOrderId)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    public void findByIdShouldReturnUnauthorizedWhenUserNotLogged(){
+
+        given()
+                .header("Authorization", "Bearer " + invalidToken)
+                .accept(ContentType.JSON)
+                .when()
+                .get("/orders/{id}", existingOrderId)
+                .then()
+                .statusCode(401);
+
+    }
+
 
 }
