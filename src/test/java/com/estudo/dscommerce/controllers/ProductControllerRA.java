@@ -23,6 +23,7 @@ public class ProductControllerRA {
     private String nameProduct;
 
     private Map<String, Object> postProductInstance;
+    private List<Map<String, Object>> categories;
 
     @BeforeEach
     public void setUp(){
@@ -48,7 +49,7 @@ public class ProductControllerRA {
         postProductInstance.put("price", 50.0);
         postProductInstance.put("imgUrl", "http://imagem.com");
 
-        List<Map<String, Object>> categories = new ArrayList<>();
+        categories = new ArrayList<>();
 
         Map<String, Object> category1 = new HashMap<>();
         category1.put("id", 2);
@@ -108,12 +109,9 @@ public class ProductControllerRA {
     @Test
     public void insertShouldReturnProductCreatedWhenAdminLogged(){
 
-        JSONObject newProduct = new JSONObject(postProductInstance);
-
         given()
-                .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + adminToken)
-                .body(newProduct)
+                .body(postProductInstance)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .when()
@@ -123,6 +121,117 @@ public class ProductControllerRA {
                 .body("name", equalTo("Tablet"))
                 .body("price", is(50.0F))
                 .body("categories.id", hasItems(2));
+    }
+
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndInvalidName(){
+
+        postProductInstance.put("name", "ba");
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .body(postProductInstance)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .post("/products")
+                .then()
+                .statusCode(422);
+    }
+
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndInvalidDescription(){
+
+        postProductInstance.put("description", "dl");
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .body(postProductInstance)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .post("/products")
+                .then()
+                .statusCode(422);
+
+    }
+
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndInvalidPrice(){
+
+        postProductInstance.put("price", -50.0);
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .body(postProductInstance)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .post("/products")
+                .then()
+                .statusCode(422);
+    }
+
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndPriceForZero(){
+
+        postProductInstance.put("price", 0);
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .body(postProductInstance)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .post("/products")
+                .then()
+                .statusCode(422);
+
+    }
+
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenAdminLoggedAndDoesNotAssociatedCategory(){
+
+        categories.clear();
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .body(postProductInstance)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .post("/products")
+                .then()
+                .statusCode(422);
+
+    }
+
+    @Test
+    public void insertShouldReturnForbiddenWhenClientLogged(){
+
+        given()
+                .header("Authorization", "Bearer " + clientToken)
+                .body(postProductInstance)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .post("/products")
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    public void insertShouldReturnUnauthorizedWhenUserIsNotLogged(){
+
+        given()
+                .header("Authorization", "Bearer " + invalidToken)
+                .body(postProductInstance)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .post("/products")
+                .then()
+                .statusCode(401);
 
     }
 
